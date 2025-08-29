@@ -30,8 +30,6 @@ jobs:
       - name: Swift version
         run: swift --version
       - name: Run tests against Apple's CoreGraphics on macOS via SwiftPM
-        env:
-          OPENRENDERBOX_LIBRARY_EVOLUTION: 0
         run: |
           swift test \
             --build-path .build-compatibility-test-debug

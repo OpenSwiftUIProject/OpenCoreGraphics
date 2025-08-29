@@ -47,7 +47,10 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-numerics", from: "1.0.3"),
     ],
     targets: [
-        .target(name: "OpenGraphics"),
+        .target(
+            name: "OpenGraphics",
+            swiftSettings: sharedSwiftSettings
+        ),
         .target(
             name: "OpenGraphicsShims",
             dependencies: ["OpenGraphics"],
@@ -60,6 +63,28 @@ let package = Package(
             name: "OpenGraphicsShimsTests",
             dependencies: [
                 "OpenGraphicsShims",
+                .product(name: "Numerics", package: "swift-numerics"),
+            ],
+            swiftSettings: sharedSwiftSettings
+        ),
+
+        .target(
+            name: "OpenQuartzCore",
+            dependencies: ["OpenGraphics"],
+            swiftSettings: sharedSwiftSettings
+        ),
+        .target(
+            name: "OpenQuartzCoreShims",
+            dependencies: ["OpenQuartzCore"],
+            swiftSettings: sharedSwiftSettings,
+            linkerSettings: [
+                .linkedFramework("QuartzCore", .when(platforms: .darwinPlatforms)),
+            ]
+        ),
+        .testTarget(
+            name: "OpenQuartzCoreShimsTests",
+            dependencies: [
+                "OpenQuartzCoreShims",
                 .product(name: "Numerics", package: "swift-numerics"),
             ],
             swiftSettings: sharedSwiftSettings

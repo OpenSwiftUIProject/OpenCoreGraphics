@@ -3,7 +3,7 @@
 //  OpenGraphicsShimsTests
 
 import Testing
-import OpenGraphicsShims
+import OpenQuartzCoreShims
 import Numerics
 
 @Suite

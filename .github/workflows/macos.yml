@@ -29,8 +29,6 @@ jobs:
       - name: Swift version
         run: swift --version
       - name: Build and run tests in debug mode with coverage
-        env:
-          OPENRENDERBOX_LIBRARY_EVOLUTION: 0
         run: |
           swift test \
             -c debug \
@@ -38,11 +36,9 @@ jobs:
             --build-path .build-test-debug
           xcrun llvm-cov show \
             -instr-profile=.build-test-debug/debug/codecov/default.profdata \
-            .build-test-debug/debug/OPENRENDERBOXPackageTests.xctest/Contents/MacOS/OPENRENDERBOXPackageTests \
+            .build-test-debug/debug/OpenGraphicsPackageTests.xctest/Contents/MacOS/OpenGraphicsPackageTests \
             > coverage.txt
       - name: Build and run tests in release mode
-        env:
-          OPENRENDERBOX_LIBRARY_EVOLUTION: 0
         run: |
           swift test \
             -c release \

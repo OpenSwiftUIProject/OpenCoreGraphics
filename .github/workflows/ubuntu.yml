@@ -32,7 +32,7 @@ jobs:
             --build-path .build-test-debug
           llvm-cov show \
             -instr-profile=.build-test-debug/debug/codecov/default.profdata \
-            .build-test-debug/debug/OpenRenderBoxPackageTests.xctest \
+            .build-test-debug/debug/OpenGraphicsPackageTests.xctest \
             > coverage.txt
       - name: Building and running tests in release mode
         run: |
