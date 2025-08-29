@@ -1,6 +1,6 @@
 //
 //  CGAffineTransform.swift
-//  OpenGraphics
+//  OpenCoreGraphics
 
 public import Foundation
 

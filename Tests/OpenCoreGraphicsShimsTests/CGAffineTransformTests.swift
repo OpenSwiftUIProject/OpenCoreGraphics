@@ -1,9 +1,9 @@
 //
 //  CGAffineTransformTests.swift
-//  OpenGraphicsShimsTests
+//  OpenCoreGraphicsShimsTests
 
 import Testing
-import OpenGraphicsShims
+import OpenCoreGraphicsShims
 import Numerics
 
 @Suite

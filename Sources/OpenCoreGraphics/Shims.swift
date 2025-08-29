@@ -1,6 +1,6 @@
 //
 //  Shims.swift
-//  OpenGraphics
+//  OpenCoreGraphics
 
 #if canImport(Darwin)
 public import Foundation

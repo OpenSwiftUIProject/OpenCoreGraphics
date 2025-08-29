@@ -1,6 +1,6 @@
 //
 //  CGPath.swift
-//  OpenGraphics
+//  OpenCoreGraphics
 //
 //  License: MIT
 //  Modified from https://github.com/PureSwift/Silica/blob/22c72ff508c40ae5e673c16ad39f39235f6ddd01/Sources/Silica/CGPath.swift

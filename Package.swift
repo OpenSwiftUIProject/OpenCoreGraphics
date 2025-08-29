@@ -22,44 +22,44 @@ var sharedSwiftSettings: [SwiftSetting] = [
 
 #if os(macOS)
 // NOTE: #if os(macOS) check is not accurate if we are cross compiling for Linux platform. So we add an env key to specify it.
-let buildForDarwinPlatform = envEnable("OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM", default: true)
+let buildForDarwinPlatform = envEnable("OPENCOREGRAPHICS_BUILD_FOR_DARWIN_PLATFORM", default: true)
 #else
-let buildForDarwinPlatform = envEnable("OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM")
+let buildForDarwinPlatform = envEnable("OPENCOREGRAPHICS_BUILD_FOR_DARWIN_PLATFORM")
 #endif
 
 let isXcodeEnv = Context.environment["__CFBundleIdentifier"] == "com.apple.dt.Xcode"
 
-let development = envEnable("OPENGRAPHICS_DEVELOPMENT")
+let development = envEnable("OPENCOREGRAPHICS_DEVELOPMENT")
 
-// MARK: - [env] OPENGRAPHICS_COREGRAPHICS
+// MARK: - [env] OPENCOREGRAPHICS_COREGRAPHICS
 
-let coreGraphicsCondition = envEnable("OPENGRAPHICS_COREGRAPHICS", default: buildForDarwinPlatform)
+let coreGraphicsCondition = envEnable("OPENCOREGRAPHICS_COREGRAPHICS", default: buildForDarwinPlatform)
 if coreGraphicsCondition {
-    sharedSwiftSettings.append(.define("OPENGRAPHICS_COREGRAPHICS"))
+    sharedSwiftSettings.append(.define("OPENCOREGRAPHICS_COREGRAPHICS"))
 }
 
-// MARK: - [env] OPENGRAPHICS_WERROR
+// MARK: - [env] OPENCOREGRAPHICS_WERROR
 
-let warningsAsErrorsCondition = envEnable("OPENGRAPHICS_WERROR", default: isXcodeEnv && development)
+let warningsAsErrorsCondition = envEnable("OPENCOREGRAPHICS_WERROR", default: isXcodeEnv && development)
 if warningsAsErrorsCondition {
     sharedSwiftSettings.append(.unsafeFlags(["-warnings-as-errors"]))
 }
 
-// MARK: - [env] OPENGRAPHICS_LIBRARY_EVOLUTION
+// MARK: - [env] OPENCOREGRAPHICS_LIBRARY_EVOLUTION
 
-let libraryEvolutionCondition = envEnable("OPENGRAPHICS_LIBRARY_EVOLUTION", default: buildForDarwinPlatform)
+let libraryEvolutionCondition = envEnable("OPENCOREGRAPHICS_LIBRARY_EVOLUTION", default: buildForDarwinPlatform)
 
 if libraryEvolutionCondition {
     // NOTE: -enable-library-evolution will cause module verify failure for `swift build`.
-    // Either set OPENGRAPHICS_LIBRARY_EVOLUTION=0 or add `-Xswiftc -no-verify-emitted-module-interface` after `swift build`
+    // Either set OPENCOREGRAPHICS_LIBRARY_EVOLUTION=0 or add `-Xswiftc -no-verify-emitted-module-interface` after `swift build`
     sharedSwiftSettings.append(.unsafeFlags(["-enable-library-evolution", "-no-verify-emitted-module-interface"]))
 }
 
 let package = Package(
-    name: "OpenGraphics",
+    name: "OpenCoreGraphics",
     products: [
-        .library(name: "OpenGraphics", targets: ["OpenGraphics"]),
-        .library(name: "OpenGraphicsShims", targets: ["OpenGraphicsShims"]),
+        .library(name: "OpenCoreGraphics", targets: ["OpenCoreGraphics"]),
+        .library(name: "OpenCoreGraphicsShims", targets: ["OpenCoreGraphicsShims"]),
         .library(name: "OpenQuartzCore", targets: ["OpenQuartzCore"]),
         .library(name: "OpenQuartzCoreShims", targets: ["OpenQuartzCoreShims"]),
     ],
@@ -68,21 +68,21 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "OpenGraphics",
+            name: "OpenCoreGraphics",
             swiftSettings: sharedSwiftSettings
         ),
         .target(
-            name: "OpenGraphicsShims",
-            dependencies: ["OpenGraphics"],
+            name: "OpenCoreGraphicsShims",
+            dependencies: ["OpenCoreGraphics"],
             swiftSettings: sharedSwiftSettings,
             linkerSettings: [
                 .linkedFramework("CoreGraphics", .when(platforms: .darwinPlatforms)),
             ]
         ),
         .testTarget(
-            name: "OpenGraphicsShimsTests",
+            name: "OpenCoreGraphicsShimsTests",
             dependencies: [
-                "OpenGraphicsShims",
+                "OpenCoreGraphicsShims",
                 .product(name: "Numerics", package: "swift-numerics"),
             ],
             swiftSettings: sharedSwiftSettings
@@ -90,7 +90,7 @@ let package = Package(
 
         .target(
             name: "OpenQuartzCore",
-            dependencies: ["OpenGraphics"],
+            dependencies: ["OpenCoreGraphics"],
             swiftSettings: sharedSwiftSettings
         ),
         .target(

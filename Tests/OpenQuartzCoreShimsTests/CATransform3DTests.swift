@@ -1,6 +1,6 @@
 //
 //  CATransform3DTests.swift
-//  OpenGraphicsShimsTests
+//  OpenQuartzCoreShimsTests
 
 import Testing
 import OpenQuartzCoreShims
