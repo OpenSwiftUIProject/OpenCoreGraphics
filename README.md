@@ -18,7 +18,10 @@ The current suggested toolchain to build the project is Swift 6.1.2 / Xcode 16.4
 
 - [ ] Add more API and types.
 
-Ref: https://github.com/PureSwift/Silicae
+Ref:
+
+- https://github.com/PureSwift/Silicae
+- https://github.com/gnustep/libs-quartzcore
 
 ## Supported platforms
 
