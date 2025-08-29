@@ -60,6 +60,8 @@ let package = Package(
     products: [
         .library(name: "OpenGraphics", targets: ["OpenGraphics"]),
         .library(name: "OpenGraphicsShims", targets: ["OpenGraphicsShims"]),
+        .library(name: "OpenQuartzCore", targets: ["OpenQuartzCore"]),
+        .library(name: "OpenQuartzCoreShims", targets: ["OpenQuartzCoreShims"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-numerics", from: "1.0.3"),
