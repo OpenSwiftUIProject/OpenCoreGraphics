@@ -1,0 +1,37 @@
+name: Compatibility tests 
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  compatibility_tests_macos:
+    name: Execute compatibility tests
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            xcode-version: "16.4"   # Swift 6.1.2
+    runs-on: ${{ matrix.os }}
+    env:
+      OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM: 1
+      OPENGRAPHICS_WERROR: 1
+      OPENGRAPHICS_COREGRAPHICS: 1
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Xcode
+        uses: OpenSwiftUIProject/OpenSwiftUI/.github/actions/setup-xcode@main
+        with:
+          xcode-version: ${{ matrix.xcode-version }}
+      - name: Swift version
+        run: swift --version
+      - name: Run tests against Apple's CoreGraphics on macOS via SwiftPM
+        env:
+          OPENRENDERBOX_LIBRARY_EVOLUTION: 0
+        run: |
+          swift test \
+            --build-path .build-compatibility-test-debug

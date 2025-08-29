@@ -1,0 +1,53 @@
+name: macOS 
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  macos_test:
+    name: Execute tests on macOS
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15]
+        xcode-version: [16.4]   # Swift 6.1.2
+    runs-on: ${{ matrix.os }}
+    env:
+      OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM: 1
+      OPENGRAPHICS_WERROR: 1
+      OPENGRAPHICS_COREGRAPHICS: 0
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Xcode
+        uses: OpenSwiftUIProject/OpenSwiftUI/.github/actions/setup-xcode@main
+        with:
+          xcode-version: ${{ matrix.xcode-version }}
+      - name: Swift version
+        run: swift --version
+      - name: Build and run tests in debug mode with coverage
+        env:
+          OPENRENDERBOX_LIBRARY_EVOLUTION: 0
+        run: |
+          swift test \
+            -c debug \
+            --enable-code-coverage \
+            --build-path .build-test-debug
+          xcrun llvm-cov show \
+            -instr-profile=.build-test-debug/debug/codecov/default.profdata \
+            .build-test-debug/debug/OPENRENDERBOXPackageTests.xctest/Contents/MacOS/OPENRENDERBOXPackageTests \
+            > coverage.txt
+      - name: Build and run tests in release mode
+        env:
+          OPENRENDERBOX_LIBRARY_EVOLUTION: 0
+        run: |
+          swift test \
+            -c release \
+            --build-path .build-test-release
+      - uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
