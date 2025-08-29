@@ -1,10 +1,10 @@
 //
-//  Shims.swift
+//  CGRect+Extension.swift
 //  OpenCoreGraphics
 
-#if canImport(Darwin)
 public import Foundation
 
+#if canImport(Darwin)
 extension CGRect {
     public init(x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat) {
         self.init(origin: CGPoint(x: x, y: y), size: CGSize(width: width, height: height))
@@ -34,9 +34,12 @@ extension CGRect {
         return origin.y + size.height
     }
 
-}
-
-extension CGPoint {
-    public static let zero = CGPoint(x: .zero, y: .zero)
+    public static let zero = CGRect(origin: .zero, size: .zero)
 }
 #endif
+
+extension CGRect: Swift.CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "(\(origin.x.description), \(origin.y.description), \(size.width.description), \(size.height.description))"
+    }
+}
