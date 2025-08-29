@@ -19,6 +19,7 @@ jobs:
       OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM: 1
       OPENGRAPHICS_WERROR: 1
       OPENGRAPHICS_COREGRAPHICS: 0
+      OPENGRAPHICS_LIBRARY_EVOLUTION: 0
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4

@@ -31,14 +31,28 @@ let isXcodeEnv = Context.environment["__CFBundleIdentifier"] == "com.apple.dt.Xc
 
 let development = envEnable("OPENGRAPHICS_DEVELOPMENT")
 
+// MARK: - [env] OPENGRAPHICS_COREGRAPHICS
+
 let coreGraphicsCondition = envEnable("OPENGRAPHICS_COREGRAPHICS", default: buildForDarwinPlatform)
 if coreGraphicsCondition {
     sharedSwiftSettings.append(.define("OPENGRAPHICS_COREGRAPHICS"))
 }
 
+// MARK: - [env] OPENGRAPHICS_WERROR
+
 let warningsAsErrorsCondition = envEnable("OPENGRAPHICS_WERROR", default: isXcodeEnv && development)
 if warningsAsErrorsCondition {
     sharedSwiftSettings.append(.unsafeFlags(["-warnings-as-errors"]))
+}
+
+// MARK: - [env] OPENGRAPHICS_LIBRARY_EVOLUTION
+
+let libraryEvolutionCondition = envEnable("OPENGRAPHICS_LIBRARY_EVOLUTION", default: buildForDarwinPlatform)
+
+if libraryEvolutionCondition {
+    // NOTE: -enable-library-evolution will cause module verify failure for `swift build`.
+    // Either set OPENGRAPHICS_LIBRARY_EVOLUTION=0 or add `-Xswiftc -no-verify-emitted-module-interface` after `swift build`
+    sharedSwiftSettings.append(.unsafeFlags(["-enable-library-evolution", "-no-verify-emitted-module-interface"]))
 }
 
 let package = Package(

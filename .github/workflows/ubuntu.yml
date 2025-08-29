@@ -18,6 +18,7 @@ jobs:
       OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM: 0
       OPENGRAPHICS_WERROR: 1
       OPENGRAPHICS_COREGRAPHICS: 0
+      OPENGRAPHICS_LIBRARY_EVOLUTION: 0
     container: swift:${{ matrix.swift_version }}-jammy
     steps:
       - uses: actions/checkout@v4
