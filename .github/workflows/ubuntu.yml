@@ -15,10 +15,10 @@ jobs:
         swift_version: ["6.1.2"]
     runs-on: ubuntu-22.04
     env:
-      OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM: 0
-      OPENGRAPHICS_WERROR: 1
-      OPENGRAPHICS_COREGRAPHICS: 0
-      OPENGRAPHICS_LIBRARY_EVOLUTION: 0
+      OPENCOREGRAPHICS_BUILD_FOR_DARWIN_PLATFORM: 0
+      OPENCOREGRAPHICS_WERROR: 1
+      OPENCOREGRAPHICS_COREGRAPHICS: 0
+      OPENCOREGRAPHICS_LIBRARY_EVOLUTION: 0
     container: swift:${{ matrix.swift_version }}-jammy
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
             --build-path .build-test-debug
           llvm-cov show \
             -instr-profile=.build-test-debug/debug/codecov/default.profdata \
-            .build-test-debug/debug/OpenGraphicsPackageTests.xctest \
+            .build-test-debug/debug/OpenCoreGraphicsPackageTests.xctest \
             > coverage.txt
       - name: Building and running tests in release mode
         run: |

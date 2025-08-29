@@ -17,10 +17,10 @@ jobs:
             xcode-version: "16.4"   # Swift 6.1.2
     runs-on: ${{ matrix.os }}
     env:
-      OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM: 1
-      OPENGRAPHICS_WERROR: 1
-      OPENGRAPHICS_COREGRAPHICS: 1
-      OPENGRAPHICS_LIBRARY_EVOLUTION: 0
+      OPENCOREGRAPHICS_BUILD_FOR_DARWIN_PLATFORM: 1
+      OPENCOREGRAPHICS_WERROR: 1
+      OPENCOREGRAPHICS_COREGRAPHICS: 1
+      OPENCOREGRAPHICS_LIBRARY_EVOLUTION: 0
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4

@@ -1,12 +1,12 @@
 //
 //  CATransform3D.swift
-//  OpenGraphics
+//  OpenCoreGraphics
 //
 //  License: MIT
 //  Modified from https://github.com/flowkey/UIKit-cross-platform/blob/7e28dc4c62d20afe03e55bbba660076ec06fd79a/Sources/CATransform3D.swift
 
 public import Foundation
-public import struct OpenGraphics.CGAffineTransform
+public import struct OpenCoreGraphics.CGAffineTransform
 
 public struct CATransform3D: Sendable {
     public init(

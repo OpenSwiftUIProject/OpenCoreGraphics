@@ -16,10 +16,10 @@ jobs:
         xcode-version: [16.4]   # Swift 6.1.2
     runs-on: ${{ matrix.os }}
     env:
-      OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM: 1
-      OPENGRAPHICS_WERROR: 1
-      OPENGRAPHICS_COREGRAPHICS: 0
-      OPENGRAPHICS_LIBRARY_EVOLUTION: 0
+      OPENCOREGRAPHICS_BUILD_FOR_DARWIN_PLATFORM: 1
+      OPENCOREGRAPHICS_WERROR: 1
+      OPENCOREGRAPHICS_COREGRAPHICS: 0
+      OPENCOREGRAPHICS_LIBRARY_EVOLUTION: 0
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
             --build-path .build-test-debug
           xcrun llvm-cov show \
             -instr-profile=.build-test-debug/debug/codecov/default.profdata \
-            .build-test-debug/debug/OpenGraphicsPackageTests.xctest/Contents/MacOS/OpenGraphicsPackageTests \
+            .build-test-debug/debug/OpenCoreGraphicsPackageTests.xctest/Contents/MacOS/OpenCoreGraphicsPackageTests \
             > coverage.txt
       - name: Build and run tests in release mode
         run: |

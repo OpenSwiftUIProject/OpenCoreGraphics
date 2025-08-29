@@ -1,6 +1,6 @@
 //
 //  CGLine.swift
-//  OpenGraphics
+//  OpenCoreGraphics
 
 /// Line join styles
 public enum CGLineJoin: Int32, @unchecked Sendable {
