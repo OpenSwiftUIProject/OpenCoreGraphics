@@ -27,12 +27,16 @@ let buildForDarwinPlatform = envEnable("OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM",
 let buildForDarwinPlatform = envEnable("OPENGRAPHICS_BUILD_FOR_DARWIN_PLATFORM")
 #endif
 
+let isXcodeEnv = Context.environment["__CFBundleIdentifier"] == "com.apple.dt.Xcode"
+
+let development = envEnable("OPENGRAPHICS_DEVELOPMENT")
+
 let coreGraphicsCondition = envEnable("OPENGRAPHICS_COREGRAPHICS", default: buildForDarwinPlatform)
 if coreGraphicsCondition {
     sharedSwiftSettings.append(.define("OPENGRAPHICS_COREGRAPHICS"))
 }
 
-let warningsAsErrorsCondition = envEnable("OPENGRAPHICS_WERROR", default: true)
+let warningsAsErrorsCondition = envEnable("OPENGRAPHICS_WERROR", default: isXcodeEnv && development)
 if warningsAsErrorsCondition {
     sharedSwiftSettings.append(.unsafeFlags(["-warnings-as-errors"]))
 }
