@@ -92,4 +92,41 @@ struct CGAffineTransformTests {
         #expect(inv.tx.isApproximatelyEqual(to: singular.tx))
         #expect(inv.ty.isApproximatelyEqual(to: singular.ty))
     }
+
+        // MARK: - TranslateBy
+    @Test
+    func translatedBy() {
+        let t1 = CGAffineTransform(a: 1, b: 2, c: 3, d: 4, tx: 5, ty: 6)
+        let t2 = t1.translatedBy(x: 7, y: 8)
+        #expect(t2.a.isApproximatelyEqual(to: 1.0))
+        #expect(t2.b.isApproximatelyEqual(to: 2.0))
+        #expect(t2.c.isApproximatelyEqual(to: 3.0))
+        #expect(t2.d.isApproximatelyEqual(to: 4.0))
+        #expect(t2.tx.isApproximatelyEqual(to: 36.0))
+        #expect(t2.ty.isApproximatelyEqual(to: 52.0))
+    }
+
+    @Test
+    func scaledBy() {
+        let t1 = CGAffineTransform(a: 1, b: 2, c: 3, d: 4, tx: 5, ty: 6)
+        let t2 = t1.scaledBy(x: 7, y: 8)
+        #expect(t2.a.isApproximatelyEqual(to: 7.0))
+        #expect(t2.b.isApproximatelyEqual(to: 14.0))
+        #expect(t2.c.isApproximatelyEqual(to: 24.0))
+        #expect(t2.d.isApproximatelyEqual(to: 32.0))
+        #expect(t2.tx.isApproximatelyEqual(to: 5.0))
+        #expect(t2.ty.isApproximatelyEqual(to: 6.0))
+    }
+
+    @Test
+    func rotated() {
+        let t1 = CGAffineTransform(a: 1, b: 2, c: 3, d: 4, tx: 5, ty: 6)
+        let t2 = t1.rotated(by: .pi / 2)
+        #expect(t2.a.isApproximatelyEqual(to: 3.0))
+        #expect(t2.b.isApproximatelyEqual(to: 4.0))
+        #expect(t2.c.isApproximatelyEqual(to: -1.0))
+        #expect(t2.d.isApproximatelyEqual(to: -2.0))
+        #expect(t2.tx.isApproximatelyEqual(to: 5.0))
+        #expect(t2.ty.isApproximatelyEqual(to: 6.0))
+    }
 }
