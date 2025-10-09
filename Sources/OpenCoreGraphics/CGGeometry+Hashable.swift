@@ -2,9 +2,13 @@
 //  CGGeometry+Hashable.swift
 //  OpenCoreGraphics
 
-#if !canImport(Darwin)
-// Foundation does not provide Hashable conformance for CG types yet.
+// Only provide Hashable conformance on non-Darwin platforms with Swift < 6.2
+// - On Darwin: CoreGraphics provides Hashable conformance
+// - On Linux/Windows with Swift >= 6.2: swift-corelibs-foundation provides Hashable conformance
+// - On Linux/Windows with Swift < 6.2: We provide Hashable conformance as a workaround
+//
 // See https://github.com/swiftlang/swift-corelibs-foundation/issues/5275
+#if !canImport(Darwin) && compiler(<6.2)
 public import Foundation
 
 extension CGPoint: Swift.Hashable {
