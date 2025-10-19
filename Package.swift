@@ -18,6 +18,7 @@ func envEnable(_ key: String, default defaultValue: Bool = false) -> Bool {
 
 var sharedSwiftSettings: [SwiftSetting] = [
     .swiftLanguageMode(.v6),
+    .enableUpcomingFeature("InternalImportsByDefault"),
 ]
 
 #if os(macOS)
