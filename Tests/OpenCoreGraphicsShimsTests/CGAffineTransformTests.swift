@@ -5,6 +5,11 @@
 import Testing
 import OpenCoreGraphicsShims
 import Numerics
+#if OPENCOREGRAPHICS_COREGRAPHICS
+import struct CoreGraphics.CGAffineTransform
+#else
+import struct OpenCoreGraphics.CGAffineTransform
+#endif
 
 @Suite
 struct CGAffineTransformTests {
@@ -97,11 +102,7 @@ struct CGAffineTransformTests {
 
     @Test
     func translatedBy() {
-        #if OPENCOREGRAPHICS_COREGRAPHICS
         let t1 = CGAffineTransform(a: 1, b: 2, c: 3, d: 4, tx: 5, ty: 6)
-        #else
-        let t1 = OpenCoreGraphics.CGAffineTransform(a: 1, b: 2, c: 3, d: 4, tx: 5, ty: 6)
-        #endif
         let t2 = t1.translatedBy(x: 7, y: 8)
         #expect(t2.a.isApproximatelyEqual(to: 1.0))
         #expect(t2.b.isApproximatelyEqual(to: 2.0))
@@ -115,11 +116,7 @@ struct CGAffineTransformTests {
 
     @Test
     func scaledBy() {
-        #if OPENCOREGRAPHICS_COREGRAPHICS
         let t1 = CGAffineTransform(a: 1, b: 2, c: 3, d: 4, tx: 5, ty: 6)
-        #else
-        let t1 = OpenCoreGraphics.CGAffineTransform(a: 1, b: 2, c: 3, d: 4, tx: 5, ty: 6)
-        #endif
         let t2 = t1.scaledBy(x: 7, y: 8)
         #expect(t2.a.isApproximatelyEqual(to: 7.0))
         #expect(t2.b.isApproximatelyEqual(to: 14.0))
@@ -133,11 +130,7 @@ struct CGAffineTransformTests {
 
     @Test
     func rotated() {
-        #if OPENCOREGRAPHICS_COREGRAPHICS
         let t1 = CGAffineTransform(a: 1, b: 2, c: 3, d: 4, tx: 5, ty: 6)
-        #else
-        let t1 = OpenCoreGraphics.CGAffineTransform(a: 1, b: 2, c: 3, d: 4, tx: 5, ty: 6)
-        #endif
         let t2 = t1.rotated(by: .pi / 2)
         #expect(t2.a.isApproximatelyEqual(to: 3.0))
         #expect(t2.b.isApproximatelyEqual(to: 4.0))
