@@ -141,7 +141,7 @@ var sharedSwiftSettings: [SwiftSetting] = [
 ]
 
 if coreGraphicsCondition {
-    sharedSwiftSettings.append(.define("COREGRAPHICS"))
+    sharedSwiftSettings.append(.define("OPENCOREGRAPHICS_COREGRAPHICS"))
 }
 
 if warningsAsErrorsCondition {
