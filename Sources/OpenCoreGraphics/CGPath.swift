@@ -8,7 +8,7 @@
 public import Foundation
 
 /// A graphics path is a mathematical description of a series of shapes or lines.
-public struct CGPath {
+public final class CGPath {
 
     public typealias Element = PathElement
 
@@ -17,6 +17,14 @@ public struct CGPath {
     public init(elements: [Element] = []) {
 
         self.elements = elements
+    }
+}
+
+public final class CGPathRef {
+    public var path: CGPath
+
+    public init(path: CGPath) {
+        self.path = path
     }
 }
 
@@ -48,7 +56,7 @@ public enum PathElement {
 
 public extension CGPath {
 
-    mutating func addRect(_ rect: CGRect) {
+    func addRect(_ rect: CGRect) {
 
         let newElements: [Element] = [.moveToPoint(CGPoint(x: rect.minX, y: rect.minY)),
                                       .addLineToPoint(CGPoint(x: rect.maxX, y: rect.minY)),
@@ -59,7 +67,7 @@ public extension CGPath {
         elements.append(contentsOf: newElements)
     }
 
-    mutating func addEllipse(in rect: CGRect) {
+    func addEllipse(in rect: CGRect) {
 
         var p = CGPoint()
         var p1 = CGPoint()
@@ -92,27 +100,27 @@ public extension CGPath {
         elements.append(.addCurveToPoint(p1, p2, p))
     }
 
-    mutating func move(to point: CGPoint) {
+    func move(to point: CGPoint) {
 
         elements.append(.moveToPoint(point))
     }
 
-    mutating func addLine(to point: CGPoint) {
+    func addLine(to point: CGPoint) {
 
         elements.append(.addLineToPoint(point))
     }
 
-    mutating func addCurve(to endPoint: CGPoint, control1: CGPoint, control2: CGPoint) {
+    func addCurve(to endPoint: CGPoint, control1: CGPoint, control2: CGPoint) {
 
         elements.append(.addCurveToPoint(control1, control2, endPoint))
     }
 
-    mutating func addQuadCurve(to endPoint: CGPoint, control: CGPoint) {
+    func addQuadCurve(to endPoint: CGPoint, control: CGPoint) {
 
         elements.append(.addQuadCurveToPoint(control, endPoint))
     }
 
-    mutating func closeSubpath() {
+    func closeSubpath() {
 
         elements.append(.closeSubpath)
     }
