@@ -10,7 +10,7 @@ extension CGPoint {
     public static let zero = CGPoint(x: .zero, y: .zero)
 }
 
-extension CGPoint: Hashable {
+extension CGPoint: Swift.Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(x)
         hasher.combine(y)
