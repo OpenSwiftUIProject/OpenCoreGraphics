@@ -8,17 +8,26 @@
 public import Foundation
 
 /// A graphics path is a mathematical description of a series of shapes or lines.
-public final class CGPath {
-
+public class CGPath: Hashable {
     public typealias Element = PathElement
 
     public var elements: [Element]
 
     public init(elements: [Element] = []) {
-
         self.elements = elements
     }
+
+    public static func == (lhs: CGPath, rhs: CGPath) -> Bool {
+        lhs.elements == rhs.elements
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(elements)
+    }
 }
+
+/// For compatibility with CoreGraphics API.
+public class CGMutablePath: CGPath {}
 
 public final class CGPathRef {
     public var path: CGPath
@@ -31,7 +40,7 @@ public final class CGPathRef {
 // MARK: - Supporting Types
 
 /// A path element.
-public enum PathElement {
+public enum PathElement: Hashable {
 
     /// The path element that starts a new subpath. The element holds a single point for the destination.
     case moveToPoint(CGPoint)

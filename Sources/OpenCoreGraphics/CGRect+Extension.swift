@@ -36,6 +36,17 @@ extension CGRect {
 
     public static let zero = CGRect(origin: .zero, size: .zero)
 }
+
+extension CGRect: Swift.Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(origin)
+        hasher.combine(size)
+    }
+
+    public static func == (lhs: CGRect, rhs: CGRect) -> Bool {
+        return lhs.origin == rhs.origin && lhs.size == rhs.size
+    }
+}
 #endif
 
 extension CGRect: Swift.CustomDebugStringConvertible {
