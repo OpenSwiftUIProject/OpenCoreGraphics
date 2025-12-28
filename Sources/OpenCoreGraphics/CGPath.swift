@@ -24,6 +24,14 @@ public class CGPath: Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(elements)
     }
+
+    public var isEmpty: Bool {
+        elements.isEmpty
+    }
+
+    public func mutableCopy() -> CGMutablePath? {
+        self as? CGMutablePath
+    }
 }
 
 /// For compatibility with CoreGraphics API.
