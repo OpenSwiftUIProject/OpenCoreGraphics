@@ -140,6 +140,16 @@ var sharedSwiftSettings: [SwiftSetting] = [
     .enableUpcomingFeature("InternalImportsByDefault"),
 ]
 
+let sharedCSettings: [CSetting] = [
+    .define("_WASI_EMULATED_SIGNAL", .when(platforms: [.wasi])),
+    .define("_WASI_EMULATED_MMAN", .when(platforms: [.wasi])),
+]
+
+let sharedLinkerSettings: [LinkerSetting] = [
+    .linkedLibrary("wasi-emulated-signal", .when(platforms: [.wasi])),
+    .linkedLibrary("wasi-emulated-mman", .when(platforms: [.wasi])),
+]
+
 if coreGraphicsCondition {
     sharedSwiftSettings.append(.define("OPENCOREGRAPHICS_COREGRAPHICS"))
 }
@@ -168,11 +178,14 @@ let package = Package(
     targets: [
         .target(
             name: "OpenCoreGraphics",
-            swiftSettings: sharedSwiftSettings
+            cSettings: sharedCSettings,
+            swiftSettings: sharedSwiftSettings,
+            linkerSettings: sharedLinkerSettings
         ),
         .target(
             name: "OpenCoreGraphicsShims",
             dependencies: coreGraphicsCondition ? [] : ["OpenCoreGraphics"],
+            cSettings: sharedCSettings,
             swiftSettings: sharedSwiftSettings,
             linkerSettings: [
                 .linkedFramework("CoreGraphics", .when(platforms: .darwinPlatforms)),
@@ -184,17 +197,20 @@ let package = Package(
                 "OpenCoreGraphicsShims",
                 .product(name: "Numerics", package: "swift-numerics"),
             ],
+            cSettings: sharedCSettings,
             swiftSettings: sharedSwiftSettings
         ),
 
         .target(
             name: "OpenQuartzCore",
             dependencies: ["OpenCoreGraphics"],
+            cSettings: sharedCSettings,
             swiftSettings: sharedSwiftSettings
         ),
         .target(
             name: "OpenQuartzCoreShims",
             dependencies: coreGraphicsCondition ? [] : ["OpenQuartzCore"],
+            cSettings: sharedCSettings,
             swiftSettings: sharedSwiftSettings,
             linkerSettings: [
                 .linkedFramework("QuartzCore", .when(platforms: .darwinPlatforms)),
@@ -206,6 +222,7 @@ let package = Package(
                 "OpenQuartzCoreShims",
                 .product(name: "Numerics", package: "swift-numerics"),
             ],
+            cSettings: sharedCSettings,
             swiftSettings: sharedSwiftSettings
         ),
     ]
