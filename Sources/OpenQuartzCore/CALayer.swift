@@ -6,6 +6,8 @@
 //  Status: Empty
 
 open class CALayer {
+    public init() {}
+
     open weak var delegate: CALayerDelegate?
 
     open var contents: CGImage?
