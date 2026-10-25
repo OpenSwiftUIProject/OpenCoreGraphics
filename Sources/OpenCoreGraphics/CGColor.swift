@@ -2,44 +2,48 @@
 //  CGColor.swift
 //  OpenCoreGraphics
 
+public import CoreFoundation
 public import Foundation
 
-open class CGColor: NSObject {
-    private enum Space: Hashable {
-        case genericRGB
-        case sRGB
-        case genericGray
-        case genericGrayGamma2_2
-    }
-
-    private let space: Space
+open class CGColor: Foundation.NSObject {
+    private let space: CGColorSpace
     private let storedComponents: [CGFloat]
 
     public init(red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {
-        space = .genericRGB
+        space = CGColorSpace(.genericRGB)
         storedComponents = [red, green, blue, alpha].map { min(max($0, 0), 1) }
         super.init()
     }
 
     public init(srgbRed red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {
-        space = .sRGB
+        space = CGColorSpace(.sRGB)
         storedComponents = [red, green, blue, alpha].map { min(max($0, 0), 1) }
         super.init()
     }
 
     public init(gray: CGFloat, alpha: CGFloat) {
-        space = .genericGray
+        space = CGColorSpace(.genericGray)
         storedComponents = [gray, alpha].map { min(max($0, 0), 1) }
         super.init()
     }
 
     public init(genericGrayGamma2_2Gray gray: CGFloat, alpha: CGFloat) {
-        space = .genericGrayGamma2_2
+        space = CGColorSpace(.genericGrayGamma2_2)
         storedComponents = [gray, alpha].map { min(max($0, 0), 1) }
         super.init()
     }
 
-    private init(space: Space, components: [CGFloat]) {
+    public init?(colorSpace: CGColorSpace, components: UnsafePointer<CGFloat>) {
+        space = colorSpace
+        let count = colorSpace.numberOfComponents
+        storedComponents = (0...count).map { index in
+            let value = components[index]
+            return index < count && colorSpace.usesExtendedRange ? value : min(max(value, 0), 1)
+        }
+        super.init()
+    }
+
+    private init(space: CGColorSpace, components: [CGFloat]) {
         self.space = space
         storedComponents = components
         super.init()
@@ -59,6 +63,8 @@ open class CGColor: NSObject {
 
     public var components: [CGFloat]? { storedComponents }
 
+    public var colorSpace: CGColorSpace? { space }
+
     public var numberOfComponents: Int { storedComponents.count }
 
     public var alpha: CGFloat { storedComponents[storedComponents.count - 1] }
@@ -70,6 +76,14 @@ open class CGColor: NSObject {
         // Copying alpha does not apply the initializer's clamping.
         components[components.count - 1] = alpha
         return CGColor(space: space, components: components)
+    }
+
+    public func converted(to space: CGColorSpace, intent: CGColorRenderingIntent, options: CFDictionary?) -> CGColor? {
+        guard self.space != space else { return self }
+        // These fixed matrix/curve profiles use the same transform for each intent.
+        var components = self.space.convert(storedComponents, to: space)
+        components.append(alpha)
+        return CGColor(colorSpace: space, components: components)
     }
 
     open override func isEqual(_ object: Any?) -> Bool {
