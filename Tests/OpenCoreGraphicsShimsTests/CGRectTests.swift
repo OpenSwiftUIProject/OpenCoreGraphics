@@ -47,10 +47,9 @@ struct CGRectTests {
 
     @Test(arguments: [
         (CGRect(x: 5, y: 5, width: 10, height: 10), true),
-        (CGRect(x: 10, y: 0, width: 10, height: 10), false),
+        (CGRect(x: 11, y: 0, width: 10, height: 10), false),
         (CGRect(x: 5, y: 5, width: 0, height: 0), true),
         (CGRect(x: 5, y: 5, width: 0, height: 2), true),
-        (CGRect(x: 10, y: 5, width: 0, height: 0), false),
         (CGRect.zero, true),
         (CGRect.null, false),
     ])
@@ -59,6 +58,24 @@ struct CGRectTests {
         #expect(rect.intersects(other) == expected)
         #expect(other.intersects(rect) == expected)
         #expect(!CGRect.null.intersects(other))
+    }
+
+    @Test(arguments: [
+        CGRect(x: 10, y: 0, width: 10, height: 10),
+        CGRect(x: 10, y: 5, width: 0, height: 0),
+    ])
+    func maximumEdgeIntersection(other: CGRect) {
+        let rect = CGRect(x: 10, y: 10, width: -10, height: -10)
+        // OpenCoreGraphics follows Darwin CoreGraphics for boundary intersections.
+        // Linux currently uses Swift Foundation's CGRect, which includes these
+        // boundary contacts. The Linux expectation records this platform difference.
+        #if canImport(Darwin)
+        let expected = false
+        #else
+        let expected = true
+        #endif
+        #expect(rect.intersects(other) == expected)
+        #expect(other.intersects(rect) == expected)
     }
 
     @Test
