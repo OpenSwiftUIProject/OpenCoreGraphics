@@ -17,6 +17,16 @@ public class CGPath: Hashable {
         self.elements = elements
     }
 
+    /// Creates an immutable path of a rectangle.
+    public convenience init(rect: CGRect, transform: UnsafePointer<CGAffineTransform>?) {
+        self.init(elements: Self.rectElements(rect, transform: transform?.pointee))
+    }
+
+    /// Creates an immutable path of an ellipse.
+    public convenience init(ellipseIn rect: CGRect, transform: UnsafePointer<CGAffineTransform>?) {
+        self.init(elements: Self.ellipseElements(in: rect, transform: transform?.pointee))
+    }
+
     public static func == (lhs: CGPath, rhs: CGPath) -> Bool {
         lhs.elements == rhs.elements
     }
@@ -27,6 +37,33 @@ public class CGPath: Hashable {
 
     public var isEmpty: Bool {
         elements.isEmpty
+    }
+
+    /// The current point in a graphics path.
+    ///
+    /// If the path is empty, this value is `CGPoint.zero`.
+    public var currentPoint: CGPoint {
+        var currentPoint: CGPoint?
+        var subpathStart: CGPoint?
+
+        for element in elements {
+            switch element {
+            case let .moveToPoint(point):
+                currentPoint = point
+                subpathStart = point
+            case let .addLineToPoint(end),
+                 let .addQuadCurveToPoint(_, end),
+                 let .addCurveToPoint(_, _, end):
+                guard currentPoint != nil else { continue }
+                currentPoint = end
+            case .closeSubpath:
+                if let start = subpathStart {
+                    currentPoint = start
+                }
+            }
+        }
+
+        return currentPoint ?? .zero
     }
 
     /// The smallest rectangle completely enclosing all points in the path,
@@ -108,6 +145,38 @@ public class CGPath: Hashable {
     public func mutableCopy() -> CGMutablePath? {
         self as? CGMutablePath
     }
+
+    public func applyWithBlock(_ block: (UnsafePointer<CGPathElement>) -> Void) {
+        var pointStorage = (CGPoint.zero, CGPoint.zero, CGPoint.zero)
+        withUnsafeMutablePointer(to: &pointStorage) { tuplePtr in
+            tuplePtr.withMemoryRebound(to: CGPoint.self, capacity: 3) { pointsPtr in
+                for item in elements {
+                    let type: CGPathElementType
+                    switch item {
+                    case let .moveToPoint(point):
+                        type = .moveToPoint
+                        pointsPtr[0] = point
+                    case let .addLineToPoint(point):
+                        type = .addLineToPoint
+                        pointsPtr[0] = point
+                    case let .addQuadCurveToPoint(control, destination):
+                        type = .addQuadCurveToPoint
+                        pointsPtr[0] = control
+                        pointsPtr[1] = destination
+                    case let .addCurveToPoint(control1, control2, destination):
+                        type = .addCurveToPoint
+                        pointsPtr[0] = control1
+                        pointsPtr[1] = control2
+                        pointsPtr[2] = destination
+                    case .closeSubpath:
+                        type = .closeSubpath
+                    }
+                    var element = CGPathElement(type: type, points: pointsPtr)
+                    withUnsafePointer(to: &element) { block($0) }
+                }
+            }
+        }
+    }
 }
 
 /// For compatibility with CoreGraphics API.
@@ -149,48 +218,12 @@ public enum PathElement: Hashable {
 
 public extension CGPath {
 
-    func addRect(_ rect: CGRect) {
-
-        let newElements: [Element] = [.moveToPoint(CGPoint(x: rect.minX, y: rect.minY)),
-                                      .addLineToPoint(CGPoint(x: rect.maxX, y: rect.minY)),
-                                      .addLineToPoint(CGPoint(x: rect.maxX, y: rect.maxY)),
-                                      .addLineToPoint(CGPoint(x: rect.minX, y: rect.maxY)),
-                                      .closeSubpath]
-
-        elements.append(contentsOf: newElements)
+    func addRect(_ rect: CGRect, transform: CGAffineTransform = .identity) {
+        elements.append(contentsOf: Self.rectElements(rect, transform: transform == .identity ? nil : transform))
     }
 
-    func addEllipse(in rect: CGRect) {
-
-        var p = CGPoint()
-        var p1 = CGPoint()
-        var p2 = CGPoint()
-
-        let hdiff = rect.width / 2 * KAPPA
-        let vdiff = rect.height / 2 * KAPPA
-
-        p = CGPoint(x: rect.origin.x + rect.width / 2, y: rect.origin.y + rect.height)
-        elements.append(.moveToPoint(p))
-
-        p = CGPoint(x: rect.origin.x, y: rect.origin.y + rect.height / 2)
-        p1 = CGPoint(x: rect.origin.x + rect.width / 2 - hdiff, y: rect.origin.y + rect.height)
-        p2 = CGPoint(x: rect.origin.x, y: rect.origin.y + rect.height / 2 + vdiff)
-        elements.append(.addCurveToPoint(p1, p2, p))
-
-        p = CGPoint(x: rect.origin.x + rect.size.width / 2, y: rect.origin.y)
-        p1 = CGPoint(x: rect.origin.x, y: rect.origin.y + rect.size.height / 2 - vdiff)
-        p2 = CGPoint(x: rect.origin.x + rect.size.width / 2 - hdiff, y: rect.origin.y)
-        elements.append(.addCurveToPoint(p1, p2, p))
-
-        p = CGPoint(x: rect.origin.x + rect.size.width, y: rect.origin.y + rect.size.height / 2)
-        p1 = CGPoint(x: rect.origin.x + rect.size.width / 2 + hdiff, y: rect.origin.y)
-        p2 = CGPoint(x: rect.origin.x + rect.size.width, y: rect.origin.y + rect.size.height / 2 - vdiff)
-        elements.append(.addCurveToPoint(p1, p2, p))
-
-        p = CGPoint(x: rect.origin.x + rect.size.width / 2, y: rect.origin.y + rect.size.height)
-        p1 = CGPoint(x: rect.origin.x + rect.size.width, y: rect.origin.y + rect.size.height / 2 + vdiff)
-        p2 = CGPoint(x: rect.origin.x + rect.size.width / 2 + hdiff, y: rect.origin.y + rect.size.height)
-        elements.append(.addCurveToPoint(p1, p2, p))
+    func addEllipse(in rect: CGRect, transform: CGAffineTransform = .identity) {
+        elements.append(contentsOf: Self.ellipseElements(in: rect, transform: transform == .identity ? nil : transform))
     }
 
     func move(to point: CGPoint) {
@@ -221,6 +254,62 @@ public extension CGPath {
 
 // This magic number is 4 *(sqrt(2) -1)/3
 private let KAPPA: CGFloat = 0.5522847498
+
+private extension CGPath {
+    static func rectElements(_ rect: CGRect, transform: CGAffineTransform?) -> [Element] {
+        let rect = rect.standardized
+        let minX = rect.origin.x
+        let minY = rect.origin.y
+        let maxX = minX + rect.size.width
+        let maxY = minY + rect.size.height
+        var p0 = CGPoint(x: minX, y: minY)
+        var p1 = CGPoint(x: maxX, y: minY)
+        var p2 = CGPoint(x: maxX, y: maxY)
+        var p3 = CGPoint(x: minX, y: maxY)
+        if let transform {
+            p0 = p0.applying(transform)
+            p1 = p1.applying(transform)
+            p2 = p2.applying(transform)
+            p3 = p3.applying(transform)
+        }
+        return [
+            .moveToPoint(p0),
+            .addLineToPoint(p1),
+            .addLineToPoint(p2),
+            .addLineToPoint(p3),
+            .closeSubpath,
+        ]
+    }
+
+    static func ellipseElements(in rect: CGRect, transform: CGAffineTransform?) -> [Element] {
+        let rect = rect.standardized
+        let rx = Double(rect.size.width) * 0.5
+        let ry = Double(rect.size.height) * 0.5
+        var matrix = CGAffineTransform(
+            a: rx,
+            b: 0,
+            c: 0,
+            d: ry,
+            tx: Double(rect.origin.x) + rx,
+            ty: Double(rect.origin.y) + ry
+        )
+        if let transform {
+            matrix = matrix.concatenating(transform)
+        }
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: x, y: y).applying(matrix)
+        }
+        let p0 = point(1, 0)
+        return [
+            .moveToPoint(p0),
+            .addCurveToPoint(point(1, KAPPA), point(KAPPA, 1), point(0, 1)),
+            .addCurveToPoint(point(-KAPPA, 1), point(-1, KAPPA), point(-1, 0)),
+            .addCurveToPoint(point(-1, -KAPPA), point(-KAPPA, -1), point(0, -1)),
+            .addCurveToPoint(point(KAPPA, -1), point(1, -KAPPA), p0),
+            .closeSubpath,
+        ]
+    }
+}
 
 private func expandQuadCurveBounds(
     _ p0: CGFloat,
@@ -291,9 +380,9 @@ public struct CGPathElement {
 
     public var type: CGPathElementType
 
-    public var points: (CGPoint, CGPoint, CGPoint)
+    public var points: UnsafeMutablePointer<CGPoint>
 
-    public init(type: CGPathElementType, points: (CGPoint, CGPoint, CGPoint)) {
+    public init(type: CGPathElementType, points: UnsafeMutablePointer<CGPoint>) {
 
         self.type = type
         self.points = points
@@ -314,62 +403,28 @@ public enum CGPathFillRule: Int {
 }
 
 /// The type of element found in a path.
-public enum CGPathElementType {
+public enum CGPathElementType: Int32, Sendable {
 
     /// The path element that starts a new subpath. The element holds a single point for the destination.
-    case moveToPoint
+    case moveToPoint = 0
 
     /// The path element that adds a line from the current point to a new point.
     /// The element holds a single point for the destination.
-    case addLineToPoint
+    case addLineToPoint = 1
 
     /// The path element that adds a quadratic curve from the current point to the specified point.
     /// The element holds a control point and a destination point.
-    case addQuadCurveToPoint
+    case addQuadCurveToPoint = 2
 
     /// The path element that adds a cubic curve from the current point to the specified point.
     /// The element holds two control points and a destination point.
-    case addCurveToPoint
+    case addCurveToPoint = 3
 
     /// The path element that closes and completes a subpath. The element does not contain any points.
-    case closeSubpath
+    case closeSubpath = 4
 }
 
 // MARK: - Silica Conversion
-
-public extension CGPathElement {
-
-    init(_ element: PathElement) {
-
-        switch element {
-
-        case let .moveToPoint(point):
-
-            self.type = .moveToPoint
-            self.points = (point, CGPoint(), CGPoint())
-
-        case let .addLineToPoint(point):
-
-            self.type = .addLineToPoint
-            self.points = (point, CGPoint(), CGPoint())
-
-        case let .addQuadCurveToPoint(control, destination):
-
-            self.type = .addQuadCurveToPoint
-            self.points = (control, destination, CGPoint())
-
-        case let .addCurveToPoint(control1, control2, destination):
-
-            self.type = .addCurveToPoint
-            self.points = (control1, control2, destination)
-
-        case .closeSubpath:
-
-            self.type = .closeSubpath
-            self.points = (CGPoint(), CGPoint(), CGPoint())
-        }
-    }
-}
 
 public extension PathElement {
 
@@ -377,13 +432,13 @@ public extension PathElement {
 
         switch element.type {
 
-        case .moveToPoint: self = .moveToPoint(element.points.0)
+        case .moveToPoint: self = .moveToPoint(element.points[0])
 
-        case .addLineToPoint: self = .addLineToPoint(element.points.0)
+        case .addLineToPoint: self = .addLineToPoint(element.points[0])
 
-        case .addQuadCurveToPoint: self = .addQuadCurveToPoint(element.points.0, element.points.1)
+        case .addQuadCurveToPoint: self = .addQuadCurveToPoint(element.points[0], element.points[1])
 
-        case .addCurveToPoint: self = .addCurveToPoint(element.points.0, element.points.1, element.points.2)
+        case .addCurveToPoint: self = .addCurveToPoint(element.points[0], element.points[1], element.points[2])
 
         case .closeSubpath: self = .closeSubpath
         }
