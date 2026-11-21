@@ -29,6 +29,82 @@ public class CGPath: Hashable {
         elements.isEmpty
     }
 
+    /// The smallest rectangle completely enclosing all points in the path,
+    /// not including control points for Bézier cubic and quadratic curves.
+    ///
+    /// If the path is empty, this value is `CGRect.null`.
+    public var boundingBoxOfPath: CGRect {
+        var minX = CGFloat.infinity
+        var minY = CGFloat.infinity
+        var maxX = -CGFloat.infinity
+        var maxY = -CGFloat.infinity
+
+        func include(_ point: CGPoint) {
+            minX = min(minX, point.x)
+            minY = min(minY, point.y)
+            maxX = max(maxX, point.x)
+            maxY = max(maxY, point.y)
+        }
+
+        var currentPoint: CGPoint?
+        var subpathStart: CGPoint?
+        var pendingMove: CGPoint?
+
+        for element in elements {
+            switch element {
+            case let .moveToPoint(point):
+                guard point.x.isFinite, point.y.isFinite else { continue }
+                currentPoint = point
+                subpathStart = point
+                pendingMove = point
+            case let .addLineToPoint(end):
+                guard end.x.isFinite, end.y.isFinite, let start = currentPoint else { continue }
+                pendingMove = nil
+                include(start)
+                include(end)
+                currentPoint = end
+            case let .addQuadCurveToPoint(control, end):
+                guard control.x.isFinite, control.y.isFinite,
+                      end.x.isFinite, end.y.isFinite,
+                      let start = currentPoint else { continue }
+                pendingMove = nil
+                include(start)
+                include(end)
+                expandQuadCurveBounds(start.x, control.x, end.x, minValue: &minX, maxValue: &maxX)
+                expandQuadCurveBounds(start.y, control.y, end.y, minValue: &minY, maxValue: &maxY)
+                currentPoint = end
+            case let .addCurveToPoint(control1, control2, end):
+                guard control1.x.isFinite, control1.y.isFinite,
+                      control2.x.isFinite, control2.y.isFinite,
+                      end.x.isFinite, end.y.isFinite,
+                      let start = currentPoint else { continue }
+                pendingMove = nil
+                include(start)
+                include(end)
+                expandCubicCurveBounds(start.x, control1.x, control2.x, end.x, minValue: &minX, maxValue: &maxX)
+                expandCubicCurveBounds(start.y, control1.y, control2.y, end.y, minValue: &minY, maxValue: &maxY)
+                currentPoint = end
+            case .closeSubpath:
+                if let pending = pendingMove {
+                    include(pending)
+                    pendingMove = nil
+                }
+                if let start = subpathStart {
+                    currentPoint = start
+                }
+            }
+        }
+
+        if let pending = pendingMove {
+            include(pending)
+        }
+
+        guard minX <= maxX, minY <= maxY else {
+            return .null
+        }
+        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+    }
+
     public func mutableCopy() -> CGMutablePath? {
         self as? CGMutablePath
     }
@@ -145,6 +221,69 @@ public extension CGPath {
 
 // This magic number is 4 *(sqrt(2) -1)/3
 private let KAPPA: CGFloat = 0.5522847498
+
+private func expandQuadCurveBounds(
+    _ p0: CGFloat,
+    _ p1: CGFloat,
+    _ p2: CGFloat,
+    minValue: inout CGFloat,
+    maxValue: inout CGFloat
+) {
+    let denom = p0 - 2 * p1 + p2
+    guard denom != 0 else { return }
+    let t = (p0 - p1) / denom
+    guard t > 0, t < 1 else { return }
+    let u = 1 - t
+    let value = u * u * p0 + 2 * u * t * p1 + t * t * p2
+    minValue = min(minValue, value)
+    maxValue = max(maxValue, value)
+}
+
+private func expandCubicCurveRoot(
+    _ p0: CGFloat,
+    _ p1: CGFloat,
+    _ p2: CGFloat,
+    _ p3: CGFloat,
+    t: CGFloat,
+    minValue: inout CGFloat,
+    maxValue: inout CGFloat
+) {
+    guard t > 0, t < 1 else { return }
+    let u = 1 - t
+    let value = u * u * u * p0 + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t * p3
+    minValue = min(minValue, value)
+    maxValue = max(maxValue, value)
+}
+
+private func expandCubicCurveBounds(
+    _ p0: CGFloat,
+    _ p1: CGFloat,
+    _ p2: CGFloat,
+    _ p3: CGFloat,
+    minValue: inout CGFloat,
+    maxValue: inout CGFloat
+) {
+    let a = -p0 + 3 * p1 - 3 * p2 + p3
+    let b = 2 * (p0 - 2 * p1 + p2)
+    let c = p1 - p0
+    if a == 0 {
+        guard b != 0 else { return }
+        expandCubicCurveRoot(p0, p1, p2, p3, t: -c / b, minValue: &minValue, maxValue: &maxValue)
+        return
+    }
+    let discriminant = b * b - 4 * a * c
+    guard discriminant >= 0 else { return }
+    if discriminant == 0 {
+        expandCubicCurveRoot(p0, p1, p2, p3, t: -b / (2 * a), minValue: &minValue, maxValue: &maxValue)
+        return
+    }
+    let root = discriminant.squareRoot()
+    let q = -0.5 * (b + (b >= 0 ? root : -root))
+    expandCubicCurveRoot(p0, p1, p2, p3, t: q / a, minValue: &minValue, maxValue: &maxValue)
+    if q != 0 {
+        expandCubicCurveRoot(p0, p1, p2, p3, t: c / q, minValue: &minValue, maxValue: &maxValue)
+    }
+}
 
 // MARK: - CoreGraphics API
 
