@@ -311,4 +311,53 @@ struct CGPathTests {
         #expect(mutTxBounds.origin.x.isApproximatelyEqual(to: 100, absoluteTolerance: 1e-6))
         #expect(mutTxBounds.origin.y.isApproximatelyEqual(to: 200, absoluteTolerance: 1e-6))
     }
+
+    @Test
+    func copyAndMutableCopyIsolateMutationsAndApplyTransform() throws {
+        let immutableRect = CGPath(rect: CGRect(x: 10, y: 20, width: 30, height: 40), transform: nil)
+        let mutableFromImmutable = try #require(immutableRect.mutableCopy())
+        #expect(mutableFromImmutable == immutableRect)
+        mutableFromImmutable.addLine(to: CGPoint(x: 100, y: 200))
+        #expect(immutableRect.boundingBoxOfPath == CGRect(x: 10, y: 20, width: 30, height: 40))
+        #expect(mutableFromImmutable.boundingBoxOfPath == CGRect(x: 10, y: 20, width: 90, height: 180))
+
+        let mutableSource = CGMutablePath()
+        mutableSource.move(to: CGPoint(x: 1, y: 2))
+        mutableSource.addQuadCurve(to: CGPoint(x: 7, y: 8), control: CGPoint(x: 5, y: 6))
+        mutableSource.addCurve(to: CGPoint(x: 13, y: 14), control1: CGPoint(x: 9, y: 10), control2: CGPoint(x: 11, y: 12))
+        mutableSource.closeSubpath()
+
+        let immutableCopy = try #require(mutableSource.copy())
+        let mutableClone = try #require(mutableSource.mutableCopy())
+        mutableSource.addLine(to: CGPoint(x: 500, y: 600))
+
+        #expect(immutableCopy == mutableClone)
+        #expect(immutableCopy != mutableSource)
+        mutableClone.addLine(to: CGPoint(x: -50, y: -60))
+        #expect(immutableCopy != mutableClone)
+
+        var transform = CGAffineTransform(a: 2, b: 1, c: -1, d: 3, tx: 10, ty: 20)
+        let transformedCopy = try #require(immutableCopy.copy(using: &transform))
+        let transformedMutableCopy = try #require(immutableCopy.mutableCopy(using: &transform))
+        #expect(transformedCopy == transformedMutableCopy)
+
+        var recorded: [(Int32, [CGPoint])] = []
+        transformedMutableCopy.applyWithBlock { ptr in
+            let element = ptr.pointee
+            let count: Int
+            switch element.type {
+            case .moveToPoint, .addLineToPoint: count = 1
+            case .addQuadCurveToPoint: count = 2
+            case .addCurveToPoint: count = 3
+            case .closeSubpath: count = 0
+            @unknown default: count = 0
+            }
+            recorded.append((element.type.rawValue, (0..<count).map { element.points[$0] }))
+        }
+        #expect(recorded.count == 4)
+        #expect(recorded[0].0 == 0 && recorded[0].1 == [CGPoint(x: 10, y: 27)])
+        #expect(recorded[1].0 == 2 && recorded[1].1 == [CGPoint(x: 14, y: 43), CGPoint(x: 16, y: 51)])
+        #expect(recorded[2].0 == 3 && recorded[2].1 == [CGPoint(x: 18, y: 59), CGPoint(x: 20, y: 67), CGPoint(x: 22, y: 75)])
+        #expect(recorded[3].0 == 4 && recorded[3].1.isEmpty)
+    }
 }
