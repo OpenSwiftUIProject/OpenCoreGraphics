@@ -233,4 +233,82 @@ struct CGPathTests {
         let nullEllipse = CGPath(ellipseIn: .null, transform: nil)
         #expect(nullEllipse.currentPoint == CGPoint(x: CGFloat.infinity, y: CGFloat.infinity))
     }
+
+    @Test
+    func roundedRectInitializerAndTransform() {
+        let nullRounded = CGPath(roundedRect: .null, cornerWidth: 0, cornerHeight: 0, transform: nil)
+        #expect(!nullRounded.isEmpty)
+        #expect(nullRounded.boundingBoxOfPath == .null)
+
+        let rect = CGRect(x: 5, y: 6, width: 100, height: 50)
+        #expect(CGPath(roundedRect: rect, cornerWidth: 0, cornerHeight: 10, transform: nil) == CGPath(rect: rect, transform: nil))
+        #expect(CGPath(roundedRect: rect, cornerWidth: 10, cornerHeight: 0, transform: nil) == CGPath(rect: rect, transform: nil))
+
+        let rounded = CGPath(roundedRect: rect, cornerWidth: 10, cornerHeight: 20, transform: nil)
+        let negativeRounded = CGPath(roundedRect: CGRect(x: 105, y: 56, width: -100, height: -50), cornerWidth: 10, cornerHeight: 20, transform: nil)
+        let mutableRounded = CGMutablePath()
+        mutableRounded.addRoundedRect(in: rect, cornerWidth: 10, cornerHeight: 20)
+
+        let bounds = rounded.boundingBoxOfPath
+        #expect(bounds.origin.x.isApproximatelyEqual(to: 5, absoluteTolerance: 1e-6))
+        #expect(bounds.origin.y.isApproximatelyEqual(to: 6, absoluteTolerance: 1e-6))
+        #expect(bounds.size.width.isApproximatelyEqual(to: 100, absoluteTolerance: 1e-6))
+        #expect(bounds.size.height.isApproximatelyEqual(to: 50, absoluteTolerance: 1e-6))
+        #expect(rounded.currentPoint.x.isApproximatelyEqual(to: 105, absoluteTolerance: 1e-6))
+        #expect(rounded.currentPoint.y.isApproximatelyEqual(to: 31, absoluteTolerance: 1e-6))
+
+        func elements(of path: CGPath) -> [(Int32, [CGPoint])] {
+            var list: [(Int32, [CGPoint])] = []
+            path.applyWithBlock { ptr in
+                let e = ptr.pointee
+                let count: Int
+                switch e.type {
+                case .moveToPoint, .addLineToPoint: count = 1
+                case .addQuadCurveToPoint: count = 2
+                case .addCurveToPoint: count = 3
+                case .closeSubpath: count = 0
+                @unknown default: count = 0
+                }
+                list.append((e.type.rawValue, (0..<count).map { e.points[$0] }))
+            }
+            return list
+        }
+
+        let roundedElems = elements(of: rounded)
+        let negElems = elements(of: negativeRounded)
+        let mutElems = elements(of: mutableRounded)
+        #expect(roundedElems.count == 10)
+        #expect(negElems.count == 10)
+        #expect(mutElems.count == 10)
+        for i in 0..<10 {
+            #expect(roundedElems[i].0 == negElems[i].0)
+            #expect(roundedElems[i].0 == mutElems[i].0)
+            for j in roundedElems[i].1.indices {
+                #expect(roundedElems[i].1[j].x.isApproximatelyEqual(to: negElems[i].1[j].x, absoluteTolerance: 1e-9))
+                #expect(roundedElems[i].1[j].y.isApproximatelyEqual(to: negElems[i].1[j].y, absoluteTolerance: 1e-9))
+                #expect(roundedElems[i].1[j].x.isApproximatelyEqual(to: mutElems[i].1[j].x, absoluteTolerance: 1e-9))
+                #expect(roundedElems[i].1[j].y.isApproximatelyEqual(to: mutElems[i].1[j].y, absoluteTolerance: 1e-9))
+            }
+        }
+
+        let halfRadii = CGPath(roundedRect: CGRect(x: 0, y: 0, width: 100, height: 50), cornerWidth: 50, cornerHeight: 25, transform: nil)
+        let halfBounds = halfRadii.boundingBoxOfPath
+        #expect(halfBounds.origin.x.isApproximatelyEqual(to: 0, absoluteTolerance: 1e-6))
+        #expect(halfBounds.origin.y.isApproximatelyEqual(to: 0, absoluteTolerance: 1e-6))
+        #expect(halfBounds.size.width.isApproximatelyEqual(to: 100, absoluteTolerance: 1e-6))
+        #expect(halfBounds.size.height.isApproximatelyEqual(to: 50, absoluteTolerance: 1e-6))
+
+        var transform = CGAffineTransform(translationX: 100, y: 200)
+        let transformed = CGPath(roundedRect: CGRect(x: 0, y: 0, width: 40, height: 20), cornerWidth: 5, cornerHeight: 5, transform: &transform)
+        let mutableTransformed = CGMutablePath()
+        mutableTransformed.addRoundedRect(in: CGRect(x: 0, y: 0, width: 40, height: 20), cornerWidth: 5, cornerHeight: 5, transform: transform)
+        let txBounds = transformed.boundingBoxOfPath
+        let mutTxBounds = mutableTransformed.boundingBoxOfPath
+        #expect(txBounds.origin.x.isApproximatelyEqual(to: 100, absoluteTolerance: 1e-6))
+        #expect(txBounds.origin.y.isApproximatelyEqual(to: 200, absoluteTolerance: 1e-6))
+        #expect(txBounds.size.width.isApproximatelyEqual(to: 40, absoluteTolerance: 1e-6))
+        #expect(txBounds.size.height.isApproximatelyEqual(to: 20, absoluteTolerance: 1e-6))
+        #expect(mutTxBounds.origin.x.isApproximatelyEqual(to: 100, absoluteTolerance: 1e-6))
+        #expect(mutTxBounds.origin.y.isApproximatelyEqual(to: 200, absoluteTolerance: 1e-6))
+    }
 }
