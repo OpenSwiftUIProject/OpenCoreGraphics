@@ -27,6 +27,23 @@ public class CGPath: Hashable {
         self.init(elements: Self.ellipseElements(in: rect, transform: transform?.pointee))
     }
 
+    /// Creates an immutable path of a rounded rectangle.
+    public convenience init(
+        roundedRect rect: CGRect,
+        cornerWidth: CGFloat,
+        cornerHeight: CGFloat,
+        transform: UnsafePointer<CGAffineTransform>?
+    ) {
+        self.init(
+            elements: Self.roundedRectElements(
+                in: rect,
+                cornerWidth: cornerWidth,
+                cornerHeight: cornerHeight,
+                transform: transform?.pointee
+            )
+        )
+    }
+
     public static func == (lhs: CGPath, rhs: CGPath) -> Bool {
         lhs.elements == rhs.elements
     }
@@ -226,6 +243,22 @@ public extension CGPath {
         elements.append(contentsOf: Self.ellipseElements(in: rect, transform: transform == .identity ? nil : transform))
     }
 
+    func addRoundedRect(
+        in rect: CGRect,
+        cornerWidth: CGFloat,
+        cornerHeight: CGFloat,
+        transform: CGAffineTransform = .identity
+    ) {
+        elements.append(
+            contentsOf: Self.roundedRectElements(
+                in: rect,
+                cornerWidth: cornerWidth,
+                cornerHeight: cornerHeight,
+                transform: transform == .identity ? nil : transform
+            )
+        )
+    }
+
     func move(to point: CGPoint) {
 
         elements.append(.moveToPoint(point))
@@ -306,6 +339,45 @@ private extension CGPath {
             .addCurveToPoint(point(-KAPPA, 1), point(-1, KAPPA), point(-1, 0)),
             .addCurveToPoint(point(-1, -KAPPA), point(-KAPPA, -1), point(0, -1)),
             .addCurveToPoint(point(KAPPA, -1), point(1, -KAPPA), p0),
+            .closeSubpath,
+        ]
+    }
+
+    static func roundedRectElements(
+        in rect: CGRect,
+        cornerWidth: CGFloat,
+        cornerHeight: CGFloat,
+        transform: CGAffineTransform?
+    ) -> [Element] {
+        let rect = rect.standardized
+        precondition(
+            cornerWidth >= 0 && 2 * cornerWidth <= rect.size.width &&
+            cornerHeight >= 0 && 2 * cornerHeight <= rect.size.height
+        )
+        if cornerWidth == 0 || cornerHeight == 0 || rect.isNull {
+            return rectElements(rect, transform: transform)
+        }
+        let minX = rect.origin.x
+        let minY = rect.origin.y
+        let maxX = minX + rect.size.width
+        let maxY = minY + rect.size.height
+        let midY = minY + rect.size.height * 0.5
+        let dx = cornerWidth * (1 - KAPPA)
+        let dy = cornerHeight * (1 - KAPPA)
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            let p = CGPoint(x: x, y: y)
+            return transform.map { p.applying($0) } ?? p
+        }
+        return [
+            .moveToPoint(point(maxX, midY)),
+            .addLineToPoint(point(maxX, maxY - cornerHeight)),
+            .addCurveToPoint(point(maxX, maxY - dy), point(maxX - dx, maxY), point(maxX - cornerWidth, maxY)),
+            .addLineToPoint(point(minX + cornerWidth, maxY)),
+            .addCurveToPoint(point(minX + dx, maxY), point(minX, maxY - dy), point(minX, maxY - cornerHeight)),
+            .addLineToPoint(point(minX, minY + cornerHeight)),
+            .addCurveToPoint(point(minX, minY + dy), point(minX + dx, minY), point(minX + cornerWidth, minY)),
+            .addLineToPoint(point(maxX - cornerWidth, minY)),
+            .addCurveToPoint(point(maxX - dx, minY), point(maxX, minY + dy), point(maxX, minY + cornerHeight)),
             .closeSubpath,
         ]
     }
