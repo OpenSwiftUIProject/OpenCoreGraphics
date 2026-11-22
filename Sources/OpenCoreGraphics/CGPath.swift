@@ -159,8 +159,20 @@ public class CGPath: Hashable {
         return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
     }
 
+    public func copy() -> CGPath? {
+        CGPath(elements: elements)
+    }
+
+    public func copy(using transform: UnsafePointer<CGAffineTransform>?) -> CGPath? {
+        CGPath(elements: copiedElements(using: transform?.pointee))
+    }
+
     public func mutableCopy() -> CGMutablePath? {
-        self as? CGMutablePath
+        CGMutablePath(elements: elements)
+    }
+
+    public func mutableCopy(using transform: UnsafePointer<CGAffineTransform>?) -> CGMutablePath? {
+        CGMutablePath(elements: copiedElements(using: transform?.pointee))
     }
 
     public func applyWithBlock(_ block: (UnsafePointer<CGPathElement>) -> Void) {
@@ -289,6 +301,30 @@ public extension CGPath {
 private let KAPPA: CGFloat = 0.5522847498
 
 private extension CGPath {
+    func copiedElements(using transform: CGAffineTransform?) -> [Element] {
+        guard let transform, transform != .identity else {
+            return elements
+        }
+        return elements.map { element in
+            switch element {
+            case let .moveToPoint(point):
+                .moveToPoint(point.applying(transform))
+            case let .addLineToPoint(end):
+                .addLineToPoint(end.applying(transform))
+            case let .addQuadCurveToPoint(control, end):
+                .addQuadCurveToPoint(control.applying(transform), end.applying(transform))
+            case let .addCurveToPoint(control1, control2, end):
+                .addCurveToPoint(
+                    control1.applying(transform),
+                    control2.applying(transform),
+                    end.applying(transform)
+                )
+            case .closeSubpath:
+                .closeSubpath
+            }
+        }
+    }
+
     static func rectElements(_ rect: CGRect, transform: CGAffineTransform?) -> [Element] {
         let rect = rect.standardized
         let minX = rect.origin.x
